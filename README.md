@@ -10,7 +10,7 @@ When someone pastes into a rich-text editor, the clipboard's HTML is whatever th
 - **Excel and Apple's apps** put the formatting in a `<style>` block.
 - **A web page** arrives with every computed style written out inline.
 
-Every editor, CMS and email composer ends up writing its own cleanup, and the good ones are paid add-ons or tied to one editor. pastewash is that cleanup as a library, for any editor:
+Editors, CMSs and email composers each end up writing their own cleanup, and the thorough ones are paid add-ons or built into one editor. pastewash is that cleanup as a library, for any editor:
 
 ```js
 import { wash } from 'pastewash';
@@ -29,7 +29,7 @@ editor.addEventListener('paste', (event) => {
 <ul><li>Passport</li><li>Chargers for the <strong>phone</strong> and laptop<ul><li>USB-C</li><li>Lightning</li></ul></li></ul>
 ```
 
-In Node, or anywhere without a `DOMParser`, import from `pastewash/node` instead. It parses with [parse5](https://github.com/inikulin/parse5) and gives exactly the same results: a test checks that the browser and Node produce identical output.
+In Node, or anywhere without a `DOMParser`, import from `pastewash/node` instead. It parses with [parse5](https://github.com/inikulin/parse5), which follows the same HTML standard as browsers, and a test checks that Node and Chromium give identical output.
 
 ## What comes out
 
@@ -89,7 +89,7 @@ wash(html: string, options?: Options): {
 | Word for the web | its class names, `paraid` | one-item lists joined by `data-listid` and nested by `data-aria-level`; `role="heading"`; bold by class |
 | Google Docs | `docs-internal-guid` | the bold wrapper; lists nested by `aria-level`; checklists (their checkbox images are dropped) |
 | Google Sheets, Excel | their markers | tables; formatting from cell styles and classes; hidden rows |
-| LibreOffice, Apple (TextEdit, Pages) | `generator` meta | formatting from `<style>` rules and `<font face>` |
+| LibreOffice, TextEdit | `generator` meta | formatting from `<style>` rules and `<font face>` |
 | Anything else | | ordinary HTML, including Chrome's inline computed styles |
 
 How each is handled, and why, is in [docs/design.md](docs/design.md).

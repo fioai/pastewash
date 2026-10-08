@@ -6,7 +6,7 @@ Every fixture also goes through the invariant checks in `../invariants.test.ts`,
 
 ## Where they came from
 
-- **`google-docs/`**: real captures from Google Docs. They were taken from the tests of [Lexical](https://github.com/facebook/lexical) (`packages/lexical-playground/src/__tests__/browser/TextFormatHTMLCopyAndPaste.test.ts`, `TablesHTMLCopyAndPaste.test.ts`, `packages/lexical/src/__tests__/unit/HTMLCopyAndPaste.test.ts`), MIT License, Copyright (c) Meta Platforms, Inc. and affiliates.
+- **`google-docs/`**: real captures from Google Docs. They were taken from the tests of [Lexical](https://github.com/facebook/lexical) (`packages/lexical-playground/src/__tests__/browser/TextFormatHTMLCopyAndPaste.test.ts`, `TablesHTMLCopyAndPaste.test.ts`, `packages/lexical/src/__tests__/unit/HTMLCopyAndPaste.test.ts`), MIT License, Copyright (c) Meta Platforms, Inc. and affiliates; the license is in [`google-docs/LICENSE`](google-docs/LICENSE).
 - **`word/`**, **`word-online/`**, **`excel/`**, **`google-sheets/`**, **`libreoffice/`**, **`apple/`**, **`web/`**: written for pastewash in each application's format, with made-up text. The structure follows these applications' output as documented in other editors' code and seen in Word-generated HTML published online. They are reconstructions, not captures: replace them with real ones as they come in.
 - **`security/`**: hostile input, written for pastewash.
 
