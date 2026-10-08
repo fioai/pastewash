@@ -4,7 +4,10 @@ Where pastewash stands, how to work on it, and what's next. Read this first.
 
 ## State (2026-10-08)
 
-Version 0.1.0, not published.
+Version 0.1.0.
+
+- Public at https://github.com/fioai/pastewash (MIT). CI runs the type check, the tests and the Chromium comparison on Node 22, 24 and 26, all green since 2026-10-08.
+- Not on npm yet: `npm publish --dry-run` passes, and the real publish waits on `npm login`.
 
 - `src/` is about 1,000 lines of TypeScript, with no dependencies but parse5, which only the Node entry uses.
 - The entry points are `pastewash` (browser, `DOMParser`), `pastewash/node` (parse5) and `pastewash/core` (`washParsed`, for bringing your own parser).
@@ -40,7 +43,7 @@ npm run test:browser   # builds dist/, then Chromium ($CHROME or chromium on the
 ## Next
 
 1. **Real captures.** Use `tools/capture.html` to collect them from Word (Windows and Mac), Word for the web, Excel, Outlook, Pages and Notion, and replace the reconstructions. This is the most valuable next step.
-2. **Publish** to npm, and put the repository on GitHub with CI (`.github/workflows/ci.yml` is ready).
+2. **Publish to npm.** `npm publish` runs the type check, tests and build first. Then add `npm install pastewash` to the README.
 3. **Images on the clipboard.** Pair Word's `file:` images with the image files on the clipboard, or say how in the README, with an example for `DataTransfer.files`.
 4. **Options for editors that want more:**
    - keep text alignment;
