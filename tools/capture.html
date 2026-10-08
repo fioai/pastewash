@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Clipboard capture</title>
+<style>
+  :root { --bg: #fafaf9; --fg: #1c1917; --muted: #78716c; --line: #d6d3d1; --accent: #2563eb; --box: #ffffff; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #1c1917; --fg: #f5f5f4; --muted: #a8a29e; --line: #44403c; --accent: #60a5fa; --box: #292524; }
+  }
+  body { margin: 0; padding: 24px 16px; background: var(--bg); color: var(--fg); font: 15px/1.5 system-ui, sans-serif; }
+  main { max-width: 860px; margin: 0 auto; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  p { color: var(--muted); margin: 0 0 16px; }
+  #target { border: 2px dashed var(--line); border-radius: 8px; padding: 32px 16px; text-align: center; background: var(--box); outline: none; }
+  #target:focus { border-color: var(--accent); }
+  section { margin-top: 20px; }
+  h2 { font-size: 14px; margin: 0 0 6px; display: flex; gap: 8px; align-items: center; }
+  pre { margin: 0; padding: 12px; background: var(--box); border: 1px solid var(--line); border-radius: 6px; max-height: 260px; overflow: auto; white-space: pre-wrap; word-break: break-all; font-size: 12px; }
+  button { font: inherit; font-size: 13px; padding: 2px 10px; border-radius: 6px; border: 1px solid var(--line); background: var(--box); color: var(--fg); cursor: pointer; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Clipboard capture</h1>
+  <p>Copy something from Word, Google Docs, Excel or anywhere, and paste it into the box. Every format on the clipboard is shown exactly as the application put it there; save the HTML as a pastewash test fixture. Nothing leaves this page.</p>
+  <div id="target" contenteditable="true">Paste here</div>
+  <div id="out"></div>
+</main>
+<script>
+  const out = document.getElementById('out');
+  const target = document.getElementById('target');
+  target.addEventListener('paste', (event) => {
+    event.preventDefault();
+    out.replaceChildren();
+    for (const type of event.clipboardData.types) {
+      if (type === 'Files') continue;
+      const data = event.clipboardData.getData(type);
+      const section = document.createElement('section');
+      const title = document.createElement('h2');
+      title.textContent = `${type} (${data.length} characters)`;
+      const save = document.createElement('button');
+      save.textContent = 'Save';
+      save.addEventListener('click', () => {
+        const ext = type === 'text/html' ? 'html' : type === 'text/rtf' ? 'rtf' : 'txt';
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(new Blob([data], { type }));
+        link.download = `capture.${ext}`;
+        link.click();
+        URL.revokeObjectURL(link.href);
+      });
+      title.append(save);
+      const pre = document.createElement('pre');
+      pre.textContent = data;
+      section.append(title, pre);
+      out.append(section);
+    }
+    target.textContent = 'Paste again to replace';
+  });
+</script>
+</body>
+</html>

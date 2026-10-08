@@ -1,0 +1,63 @@
+{
+  "name": "pastewash",
+  "version": "0.1.0",
+  "description": "Clean up HTML pasted from Word, Google Docs, Excel and the web: semantic, safe, and the same in every editor.",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./node": {
+      "types": "./dist/node.d.ts",
+      "default": "./dist/node.js"
+    },
+    "./core": {
+      "types": "./dist/core.d.ts",
+      "default": "./dist/core.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "check": "tsc -p tsconfig.json",
+    "test": "node --test 'test/**/*.test.ts'",
+    "test:browser": "npm run build && node test/browser/run.ts",
+    "prepublishOnly": "npm run check && npm test && npm run build"
+  },
+  "keywords": [
+    "paste",
+    "clipboard",
+    "html",
+    "word",
+    "google-docs",
+    "sanitize",
+    "rich-text",
+    "editor"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fioai/pastewash.git"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "parse5": "^8.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.1",
+    "typescript": "^7.0.2"
+  },
+  "sideEffects": false,
+  "author": "Fio",
+  "homepage": "https://github.com/fioai/pastewash#readme",
+  "bugs": {
+    "url": "https://github.com/fioai/pastewash/issues"
+  }
+}
