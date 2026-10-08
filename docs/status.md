@@ -17,6 +17,7 @@ What's been verified:
 - **The invariants** (idempotent, closed vocabulary, text kept in order), over every fixture and 2,000 random documents in every `npm test`. An extra 30,000 seeds were also run once with 3 option sets.
   - Random testing found two real bugs: text after a nested list was moved before it, and adjacent nested lists merged on a second wash. Both are fixed, and each is now covered.
 - **The browser and Node give the same results** (`npm run test:browser`): every fixture and 300 random documents in headless Chromium.
+- **Node 22, 24 and 26** all pass the tests. The packed package (`npm pack`) was installed into an empty project and used from plain JavaScript through `pastewash/node` and `pastewash/core`.
 
 Not verified:
 
