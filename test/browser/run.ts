@@ -38,52 +38,73 @@ await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
 const port = (server.address() as { port: number }).port;
 
 const profile = mkdtempSync(join(tmpdir(), 'pastewash-chrome-'));
-const chrome = spawn(findChrome(), [
-  '--headless=new',
-  '--remote-debugging-port=0',
-  `--user-data-dir=${profile}`,
-  '--no-first-run',
-  '--no-sandbox',
-  'about:blank',
-]);
-const devtools = await new Promise<string>((resolve, reject) => {
-  let err = '';
-  chrome.stderr.on('data', (chunk: Buffer) => {
-    err += chunk.toString();
-    const m = /DevTools listening on (ws:\/\/[^\s]+)/.exec(err);
-    if (m) resolve(m[1]!);
-  });
-  chrome.on('exit', () => reject(new Error(`Chromium exited:\n${err}`)));
-});
-
-const http = devtools.replace(/^ws:\/\/([^/]+)\/.*$/, 'http://$1');
-const target = (await (await fetch(`${http}/json/new?about:blank`, { method: 'PUT' })).json()) as {
-  webSocketDebuggerUrl: string;
-};
-const socket = new WebSocket(target.webSocketDebuggerUrl);
-await new Promise((resolve) => socket.addEventListener('open', resolve, { once: true }));
-let next = 0;
-const pending = new Map<number, (result: unknown) => void>();
-socket.addEventListener('message', (event) => {
-  const msg = JSON.parse(String(event.data)) as { id?: number; result?: unknown; error?: unknown };
-  if (msg.id !== undefined) pending.get(msg.id)?.(msg.error ? { error: msg.error } : msg.result);
-});
-function send(method: string, params: object = {}): Promise<unknown> {
-  const id = ++next;
-  socket.send(JSON.stringify({ id, method, params }));
-  return new Promise((resolve) => pending.set(id, resolve));
+// Chromium gets a process group of its own, so that all its processes can be stopped together: its
+// helpers go on writing to the profile after the main process has gone.
+const chrome = spawn(
+  findChrome(),
+  ['--headless=new', '--remote-debugging-port=0', `--user-data-dir=${profile}`, '--no-first-run', '--no-sandbox', 'about:blank'],
+  { detached: true },
+);
+const exited = new Promise((resolve) => chrome.once('exit', resolve));
+function stopChrome(): void {
+  try {
+    if (process.platform === 'win32') chrome.kill();
+    else process.kill(-chrome.pid!, 'SIGKILL');
+  } catch {
+    // Already gone.
+  }
 }
-async function evaluate(expression: string): Promise<unknown> {
-  const r = (await send('Runtime.evaluate', { expression, returnByValue: true, awaitPromise: true })) as {
-    result?: { value?: unknown };
-    exceptionDetails?: unknown;
-  };
-  if (r.exceptionDetails) throw new Error(JSON.stringify(r.exceptionDetails));
-  return r.result?.value;
+async function shutDown(): Promise<void> {
+  server.close();
+  stopChrome();
+  await exited;
+  try {
+    rmSync(profile, { recursive: true, force: true, maxRetries: 5 });
+  } catch (e) {
+    console.warn(`couldn't remove ${profile}: ${(e as Error).message}`);
+  }
 }
+// In its own group, Chromium doesn't get the terminal's Ctrl-C.
+process.once('SIGINT', () => void shutDown().then(() => process.exit(130)));
 
 let failures = 0;
 try {
+  const devtools = await new Promise<string>((resolve, reject) => {
+    let err = '';
+    chrome.stderr.on('data', (chunk: Buffer) => {
+      err += chunk.toString();
+      const m = /DevTools listening on (ws:\/\/[^\s]+)/.exec(err);
+      if (m) resolve(m[1]!);
+    });
+    chrome.on('exit', () => reject(new Error(`Chromium exited:\n${err}`)));
+  });
+
+  const http = devtools.replace(/^ws:\/\/([^/]+)\/.*$/, 'http://$1');
+  const target = (await (await fetch(`${http}/json/new?about:blank`, { method: 'PUT' })).json()) as {
+    webSocketDebuggerUrl: string;
+  };
+  const socket = new WebSocket(target.webSocketDebuggerUrl);
+  await new Promise((resolve) => socket.addEventListener('open', resolve, { once: true }));
+  let next = 0;
+  const pending = new Map<number, (result: unknown) => void>();
+  socket.addEventListener('message', (event) => {
+    const msg = JSON.parse(String(event.data)) as { id?: number; result?: unknown; error?: unknown };
+    if (msg.id !== undefined) pending.get(msg.id)?.(msg.error ? { error: msg.error } : msg.result);
+  });
+  function send(method: string, params: object = {}): Promise<unknown> {
+    const id = ++next;
+    socket.send(JSON.stringify({ id, method, params }));
+    return new Promise((resolve) => pending.set(id, resolve));
+  }
+  async function evaluate(expression: string): Promise<unknown> {
+    const r = (await send('Runtime.evaluate', { expression, returnByValue: true, awaitPromise: true })) as {
+      result?: { value?: unknown };
+      exceptionDetails?: unknown;
+    };
+    if (r.exceptionDetails) throw new Error(JSON.stringify(r.exceptionDetails));
+    return r.result?.value;
+  }
+
   await send('Page.enable');
   await send('Page.navigate', { url: `http://127.0.0.1:${port}/test/browser/page.html` });
   for (let i = 0; (await evaluate('document.title')) !== 'ready'; i++) {
@@ -107,14 +128,6 @@ try {
   }
   console.log(`${cases.length - failures} of ${cases.length} the same in Chromium as in Node`);
 } finally {
-  socket.close();
-  server.close();
-  // Chromium writes to its profile while it shuts down, so wait for it before removing the profile.
-  if (chrome.exitCode === null && chrome.signalCode === null) {
-    const exited = new Promise((resolve) => chrome.once('exit', resolve));
-    chrome.kill();
-    await exited;
-  }
-  rmSync(profile, { recursive: true, force: true, maxRetries: 5 });
+  await shutDown();
 }
 process.exit(failures ? 1 : 0);
