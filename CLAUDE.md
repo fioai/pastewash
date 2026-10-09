@@ -11,4 +11,5 @@ Rules that are easy to break:
 - **Expected outputs are written by hand from what the paste shows, never copied from what the code produces.** A test that accepts the code's output can't catch its bugs.
 - The invariants must hold for any input: washing twice changes nothing; the output uses only the vocabulary in the README; its text appears in the input in order.
 - Node and the browser must agree: run `npm run test:browser` after touching `tree.ts` or anything parser-facing.
+- Publishing to npm was approved by the user on 2026-10-08; it waits on them running `npm login`, and npm may ask them for 2FA or a browser approval at publish time. Pushing to `main` is fine.
 - Commit messages end with `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`.
